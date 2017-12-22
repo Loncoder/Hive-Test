@@ -53,11 +53,6 @@ public class DimensionHiveETL extends Configured implements Tool
     private static final String WORKING = "_running";
     private static final long MAX_INPUT_SPLIT_SIZE = 32 * 1024 * 1024;
 
-    public DimensionHiveETL(String name, Properties props) throws Exception
-    {
-        this(name, props, new Configuration());
-    }
-
     public DimensionHiveETL(String name, Properties props, Configuration conf) throws Exception
     {
         if (props.containsKey("sink")) {
@@ -173,15 +168,19 @@ public class DimensionHiveETL extends Configured implements Tool
 
     public static void main(String[] args)
     {
-        if (args.length != 2) {
+        if (args.length <= 2) {
             System.out.println("sink, scheduledLoadPath");
             return;
         }
         Properties properties  = new Properties();
         properties.put("sink", args[0]);
         properties.put("scheduledLoadPath", args[1]);
+        Configuration conf = new Configuration();
+        if (args.length == 3) {
+            conf.set("mapreduce.job.queuename", args[2]);
+        }
         try {
-            DimensionHiveETL etl = new DimensionHiveETL("DimensionHiveETL", properties);
+            DimensionHiveETL etl = new DimensionHiveETL("DimensionHiveETL", properties, conf);
             etl.run(args);
         }
         catch (Exception e) {
