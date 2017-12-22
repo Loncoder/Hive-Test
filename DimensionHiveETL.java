@@ -1,6 +1,7 @@
 package tv.freewheel.reporting.matcher;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -12,6 +13,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.reduce.LongSumReducer;
+import org.apache.hadoop.util.Tool;
 
 import java.util.HashSet;
 import java.util.Properties;
@@ -31,7 +33,7 @@ import java.io.FileNotFoundException;
  * unify csv files as external tables in Hive
  */
 
-public class DimensionHiveETL
+public class DimensionHiveETL extends Configured implements Tool
 {
     public Job job;
     public FileSystem fs;
@@ -154,7 +156,8 @@ public class DimensionHiveETL
         return schedulerPaths.toArray(new Path[0]);
     }
 
-    public void run() throws Exception
+    @Override
+    public int run(String [] args) throws Exception
     {
         int result = job.waitForCompletion(true) ? 0 : 1;
         if (result == 0) {
@@ -165,12 +168,13 @@ public class DimensionHiveETL
             fs.delete(new Path(runningSink), true);
             throw new Exception("dimension ETL failed!");
         }
+        return result;
     }
 
     public static void main(String[] args)
     {
         if (args.length != 2) {
-            System.out.println("");
+            System.out.println("sink, scheduledLoadPath");
             return;
         }
         Properties properties  = new Properties();
@@ -178,7 +182,7 @@ public class DimensionHiveETL
         properties.put("scheduledLoadPath", args[1]);
         try {
             DimensionHiveETL etl = new DimensionHiveETL("DimensionHiveETL", properties);
-            etl.run();
+            etl.run(args);
         }
         catch (Exception e) {
             e.printStackTrace();
