@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Properties;
 
 public class Util
 {
@@ -36,5 +37,17 @@ public class Util
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static Properties loadProperties(String path)
+    {
+        Properties properties = new Properties();
+        try {
+            properties.load(Util.class.getClassLoader().getResourceAsStream(path));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        return properties;
     }
 }
