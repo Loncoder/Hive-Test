@@ -115,6 +115,9 @@ public class DimensionHiveModifyFilter
             Map<String, Long> lastTableInfoMap = new HashMap<>();
 
             boolean shouldModified = false;
+            if (schedulerOutSet.contains(tableName)) {
+                shouldModified = false;
+            }
             if (root == null || root.has(tableName) == false) {
                 shouldModified = true;
             }
