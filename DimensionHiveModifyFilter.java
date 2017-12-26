@@ -113,39 +113,34 @@ public class DimensionHiveModifyFilter
         for (Map.Entry<String, Map<String, Long>> table : fileModifyTimesMap.entrySet()) {
             String tableName = table.getKey();
             Map<String, Long> lastTableInfoMap = new HashMap<>();
-            if (schedulerOutSet.contains(tableName)) {
-                boolean shouldModified = true;
-                if (root == null || root.has(tableName) == false) {
-                    shouldModified = true;
-                }
-                else {
-                    JsonObject secondRoot = root.getAsJsonObject(tableName);
 
-                    for (Map.Entry<String, Long> tablePathInfo : table.getValue().entrySet())
-                    {
-                        String path = tablePathInfo.getKey();
-                        long updateTime = tablePathInfo.getValue();
-                        if (secondRoot.has(path) && Long.compare(secondRoot.get(path).getAsLong(), updateTime) == 0)
-                        {
-                            shouldModified = false;
-                            log.info("table path（" + path + ") has not updated ,table (" + tableName + ") will not update ");
-                        }
-                        lastTableInfoMap.put(path, updateTime);
-                    }
-                }
-                if (shouldModified == true) {
-                    Set<String> eachTablePaths = table.getValue().keySet();
-                    log.info("table （" + tableName + ") will add to mr job immediately");
-
-                    tablePaths.addAll(eachTablePaths);
-                    tables.add(tableName);
-                }
-                else {
-                    fileModifyTimesMap.put(tableName, lastTableInfoMap);
-                }
+            boolean shouldModified = false;
+            if (root == null || root.has(tableName) == false) {
+                shouldModified = true;
             }
             else {
-                fileModifyTimesMap.remove(tableName);
+                JsonObject secondRoot = root.getAsJsonObject(tableName);
+                for (Map.Entry<String, Long> tablePathInfo : table.getValue().entrySet())
+                {
+                    String path = tablePathInfo.getKey();
+                    long updateTime = tablePathInfo.getValue();
+                    if (secondRoot.has(path) && Long.compare(secondRoot.get(path).getAsLong(), updateTime) == 0)
+                    {
+                        shouldModified = false;
+                        log.info("table path（" + path + ") has not updated ,table (" + tableName + ") will not update ");
+                    }
+                    lastTableInfoMap.put(path, updateTime);
+                }
+            }
+            if (shouldModified == true) {
+                Set<String> eachTablePaths = table.getValue().keySet();
+                log.info("table （" + tableName + ") will add to mr job immediately");
+
+                tablePaths.addAll(eachTablePaths);
+                tables.add(tableName);
+            }
+            else {
+                fileModifyTimesMap.put(tableName, lastTableInfoMap);
             }
         }
         return !(tablePaths.isEmpty() || tablePaths.isEmpty());
