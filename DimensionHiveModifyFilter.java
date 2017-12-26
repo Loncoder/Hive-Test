@@ -115,9 +115,7 @@ public class DimensionHiveModifyFilter
             Map<String, Long> lastTableInfoMap = new HashMap<>();
 
             boolean shouldModified = false;
-            if (schedulerOutSet.contains(tableName)) {
-                shouldModified = false;
-            }
+
             if (root == null || root.has(tableName) == false) {
                 shouldModified = true;
             }
@@ -135,7 +133,7 @@ public class DimensionHiveModifyFilter
                     lastTableInfoMap.put(path, updateTime);
                 }
             }
-            if (shouldModified == true) {
+            if (shouldModified == true && schedulerOutSet.contains(tableName)) {
                 Set<String> eachTablePaths = table.getValue().keySet();
                 log.info("table （" + tableName + ") will add to mr job immediately");
 
