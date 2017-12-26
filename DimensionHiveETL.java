@@ -1,7 +1,7 @@
 package tv.freewheel.reporting.matcher;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
+
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -13,7 +13,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.reduce.LongSumReducer;
-import org.apache.hadoop.util.Tool;
 
 import java.util.HashSet;
 import java.util.Properties;
@@ -33,7 +32,7 @@ import java.io.FileNotFoundException;
  * unify csv files as external tables in Hive
  */
 
-public class DimensionHiveETL extends Configured implements Tool
+public class DimensionHiveETL
 {
     public Job job;
     public FileSystem fs;
@@ -118,16 +117,6 @@ public class DimensionHiveETL extends Configured implements Tool
             }
         }
         FileOutputFormat.setOutputPath(job, new Path(runningSink));
-
-        for (Object objKey : props.keySet()) {
-            String key = (String) objKey;
-            if (key.startsWith("-D")) {
-                String mrConfig = key.substring(2);
-                String configValue = props.getProperty(key);
-                conf.set(mrConfig, configValue);
-                System.out.println(String.format("Conf set %s to %s", mrConfig, configValue));
-            }
-        }
     }
 
     private Path[] loadScheduledPath()
@@ -151,8 +140,7 @@ public class DimensionHiveETL extends Configured implements Tool
         return schedulerPaths.toArray(new Path[0]);
     }
 
-    @Override
-    public int run(String [] args) throws Exception
+    public int run() throws Exception
     {
         int result = job.waitForCompletion(true) ? 0 : 1;
         if (result == 0) {
@@ -168,7 +156,7 @@ public class DimensionHiveETL extends Configured implements Tool
 
     public static void main(String[] args)
     {
-        if (args.length <= 2) {
+        if (args.length < 2) {
             System.out.println("sink, scheduledLoadPath");
             return;
         }
@@ -176,12 +164,13 @@ public class DimensionHiveETL extends Configured implements Tool
         properties.put("sink", args[0]);
         properties.put("scheduledLoadPath", args[1]);
         Configuration conf = new Configuration();
+
         if (args.length == 3) {
             conf.set("mapreduce.job.queuename", args[2]);
         }
         try {
             DimensionHiveETL etl = new DimensionHiveETL("DimensionHiveETL", properties, conf);
-            etl.run(args);
+            etl.run();
         }
         catch (Exception e) {
             e.printStackTrace();
