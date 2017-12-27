@@ -40,6 +40,14 @@ public class DimensionHiveTableStatics
 
     private static void init(Properties properties)
     {
+        String driverName =
+                "org.apache.hadoop.hive.jdbc.HiveDriver";
+        try {
+            Class.forName(driverName);
+        }
+        catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         String host = properties.getProperty("host");
         String port = properties.getProperty("port");
         String db = properties.getProperty("db");
