@@ -52,6 +52,7 @@ public class DimensionHiveSchedulerFilter
         PrintStream outStream = Util.writeFile(schedulerOutFile);
 
         String tableSchedulerLine;
+        int candidateTablesCount = 0;
         while ((tableSchedulerLine = bufferedReader.readLine()) != null) {
             log.info("parse current table : " + tableSchedulerLine);
             String[] array = tableSchedulerLine.split(SCHEDULE_GROUP_SPLIT);
@@ -65,6 +66,7 @@ public class DimensionHiveSchedulerFilter
             if (nextExecDate != null) {
                 if (Math.abs(nextExecDate.getTime() - now.getTime()) / 1000 <= AheadTime * 60) {
                     outStream.println(table);
+                    candidateTablesCount++;
                     log.info("current table (" + table + ") gone to runPoint , will add to scheduler.out");
                 }
                 else {
@@ -72,6 +74,7 @@ public class DimensionHiveSchedulerFilter
                 }
             }
         }
+        log.info("now check out " + candidateTablesCount + " tables , add to runPoint");
         outStream.close();
 
     }

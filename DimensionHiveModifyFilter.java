@@ -161,6 +161,7 @@ public class DimensionHiveModifyFilter
         for (String path : tablePathList) {
             outStream.println(path);
         }
+        log.info("now check out " + tablePathList.size() + " table paths ");
         outStream.close();
     }
 
