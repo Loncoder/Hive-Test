@@ -114,7 +114,7 @@ public class DimensionHiveModifyFilter
             String tableName = table.getKey();
             Map<String, Long> lastTableInfoMap = new HashMap<>();
 
-            boolean shouldModified = false;
+            boolean shouldModified = true;
 
             if (root == null || root.has(tableName) == false) {
                 shouldModified = true;
