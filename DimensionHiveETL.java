@@ -19,15 +19,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileNotFoundException;
-
 /**
  * unify csv files as external tables in Hive
  */
@@ -38,7 +29,9 @@ public class DimensionHiveETL
     public FileSystem fs;
     private String sink;
     private String runningSink;
-    private String scheduledTableLoadPath;
+    private String scheduledLoadPath;
+    private String scheduledLoadTable;
+
     /**
      * input path:
      * {source}
@@ -54,21 +47,13 @@ public class DimensionHiveETL
 
     public DimensionHiveETL(String name, Properties props, Configuration conf) throws Exception
     {
-        if (props.containsKey("sink")) {
-            sink = props.getProperty("sink") + "/" + CURRENT;
-            runningSink = props.getProperty("sink") + "/" + WORKING;
-        }
-        else {
-            throw new RuntimeException("sink must be set");
-        }
-
-        if (props.containsKey("scheduledLoadPath")) {
-            scheduledTableLoadPath = props.getProperty("scheduledLoadPath");
-        }
-
+        sink = props.getProperty("sink") + "/" + CURRENT;
+        runningSink = props.getProperty("sink") + "/" + WORKING;
+        scheduledLoadPath = props.getProperty("scheduledLoadPath");
+        scheduledLoadTable = props.getProperty("scheduledLoadTable");
         System.out.println("Sink final: " + sink);
         System.out.println("Sink when running: " + runningSink);
-        System.out.println("scheduledLoadPath: " + scheduledTableLoadPath);
+        System.out.println("scheduledLoadPath: " + scheduledLoadPath);
 
         Job job = Job.getInstance(conf, getClass().getSimpleName());
         job.setJobName(name);
@@ -121,31 +106,43 @@ public class DimensionHiveETL
 
     private Path[] loadScheduledPath()
     {
-        List<Path> schedulerPaths = new ArrayList<>();
-        File file = new File(scheduledTableLoadPath);
-        try {
-            InputStream inputStream = new FileInputStream(file);
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String path;
-            while ((path = bufferedReader.readLine()) != null) {
+        List<Path> schedulerPaths = new ArrayList();
+        Util.readFileContent(scheduledLoadPath, new Util.FileHandler() {
+            @Override
+            public void handlerLine(String path)
+            {
                 schedulerPaths.add(new Path(path));
             }
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
         return schedulerPaths.toArray(new Path[0]);
+    }
+
+    private List<String> loadScheduleTable()
+    {
+        List<String> scheduledTableLoadTables = new ArrayList();
+        Util.readFileContent(scheduledLoadTable, new Util.FileHandler() {
+            @Override
+            public void handlerLine(String table)
+            {
+                scheduledTableLoadTables.add(table);
+            }
+        });
+        return scheduledTableLoadTables;
     }
 
     public int run() throws Exception
     {
+        List<String> scheduledTables = loadScheduleTable();
         int result = job.waitForCompletion(true) ? 0 : 1;
         if (result == 0) {
-            fs.delete(new Path(sink), true);
-            fs.rename(new Path(runningSink), new Path(sink));
+            for (String table : scheduledTables) {
+                String sinkPath = sink + "/" + table;
+                String tmpPath = runningSink + "/" + table;
+
+                fs.delete(new Path(sinkPath), true);
+                fs.rename(new Path(tmpPath), new Path(sinkPath));
+                System.out.println("deleting path : " + sinkPath);
+            }
         }
         else {
             fs.delete(new Path(runningSink), true);
@@ -156,13 +153,14 @@ public class DimensionHiveETL
 
     public static void main(String[] args)
     {
-        if (args.length < 2) {
+        if (args.length < 3) {
             System.out.println("sink, scheduledLoadPath");
             return;
         }
         Properties properties  = new Properties();
         properties.put("sink", args[0]);
         properties.put("scheduledLoadPath", args[1]);
+        properties.put("scheduledLoadTable", args[2]);
         Configuration conf = new Configuration();
 
         if (args.length == 3) {
