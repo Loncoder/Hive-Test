@@ -106,7 +106,7 @@ public class DimensionHiveETL
 
     private Path[] loadScheduledPath()
     {
-        List<Path> schedulerPaths = new ArrayList();
+        final List<Path> schedulerPaths = new ArrayList();
         Util.readFileContent(scheduledLoadPath, new Util.FileHandler() {
             @Override
             public void handlerLine(String path)
@@ -119,7 +119,7 @@ public class DimensionHiveETL
 
     private List<String> loadScheduleTable()
     {
-        List<String> scheduledTableLoadTables = new ArrayList();
+        final List<String> scheduledTableLoadTables = new ArrayList();
         Util.readFileContent(scheduledLoadTable, new Util.FileHandler() {
             @Override
             public void handlerLine(String table)
@@ -153,8 +153,8 @@ public class DimensionHiveETL
 
     public static void main(String[] args)
     {
-        if (args.length < 3) {
-            System.out.println("sink, scheduledLoadPath");
+        if (args.length < 4) {
+            System.out.println("sink, scheduledLoadPath ");
             return;
         }
         Properties properties  = new Properties();
@@ -163,8 +163,8 @@ public class DimensionHiveETL
         properties.put("scheduledLoadTable", args[2]);
         Configuration conf = new Configuration();
 
-        if (args.length == 3) {
-            conf.set("mapreduce.job.queuename", args[2]);
+        if (args.length == 4) {
+            conf.set("mapreduce.job.queuename", args[3]);
         }
         try {
             DimensionHiveETL etl = new DimensionHiveETL("DimensionHiveETL", properties, conf);
