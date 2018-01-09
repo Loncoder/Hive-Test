@@ -153,8 +153,8 @@ public class DimensionHiveETL
 
     public static void main(String[] args)
     {
-        if (args.length < 4) {
-            System.out.println("sink, scheduledLoadPath ");
+        if (args.length < 3) {
+            System.out.println("sink, scheduledLoadPath scheduledLoadTable");
             return;
         }
         Properties properties  = new Properties();

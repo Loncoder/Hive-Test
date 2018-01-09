@@ -169,8 +169,7 @@ public class DimensionHiveModifyFilter
     {
         PrintStream outStream = Util.writeFile(tablePath);
         for (String table : tables) {
-            outStream.print(table);
-            outStream.print(" ");
+            outStream.println(table);
         }
         outStream.close();
     }
